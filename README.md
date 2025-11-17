@@ -71,10 +71,6 @@ OPENAI_API_KEY=YOUR_OPENAI_KEY_HERE
 
 🛠 HƯỚNG DẪN CHẠY ỨNG DỤNG — DÀNH CHO NON-CODER
 
-Phần lớn bạn bè của bạn không phải coder, nên mình hướng dẫn kiểu “1–2 câu lệnh là chạy được bằng Claude Code”.
-
-Dưới đây là hướng dẫn cho cả Claude Code và chạy thủ công.
-
 ⚡️ CÁCH 1 — Dành cho người dùng Claude Code (DỄ NHẤT)
 
 Trong Claude Code → mở repo → bấm:
