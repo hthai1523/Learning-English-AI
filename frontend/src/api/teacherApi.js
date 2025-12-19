@@ -4,7 +4,8 @@
  */
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
-console.log('Current API_BASE_URL:', API_BASE_URL); // Debug log
+console.log('%c 🚀 API_BASE_URL:', 'background: #222; color: #bada55; font-size: 20px', API_BASE_URL);
+window.APP_VERSION = '1.0.1'; // To check in console
 
 /**
  * Chat with Coach Ivy
