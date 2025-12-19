@@ -9,10 +9,17 @@ class Settings(BaseSettings):
     """Application settings loaded from environment variables"""
 
     # OpenAI Configuration
-    openai_api_key: str
+    openai_api_key: Optional[str] = None
     openai_model_name: str = "gpt-4o-mini"
     openai_tts_model: str = "tts-1"
     openai_tts_voice: str = "nova"  # Options: alloy, echo, fable, onyx, nova, shimmer
+
+    # Gemini Configuration
+    gemini_api_key: Optional[str] = None
+    gemini_model_name: str = "gemini-pro"
+
+    # AI Provider (openai | gemini)
+    ai_provider: str = "gemini"
 
     # Server Configuration
     backend_host: str = "0.0.0.0"

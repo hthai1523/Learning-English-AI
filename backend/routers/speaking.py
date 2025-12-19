@@ -3,7 +3,12 @@ Speaking Router - Speaking practice and pronunciation evaluation
 """
 from fastapi import APIRouter, HTTPException, UploadFile, File, Form
 from models.schemas import ReadAloudResponse, AccuracyDetails
-from services import openai_service, accuracy_service
+from config import settings
+from services import accuracy_service
+if settings.ai_provider == "gemini":
+    from services import free_ai_service as ai_service
+else:
+    from services import openai_service as ai_service
 import logging
 from typing import Optional
 
@@ -36,7 +41,7 @@ async def check_read_aloud(
         logger.info(f"Read-aloud check - Expected: '{expected_text[:50]}...', Audio: {audio.filename}")
 
         # Step 1: Transcribe audio using Whisper
-        transcript = await openai_service.transcribe_audio(
+        transcript = await ai_service.transcribe_audio(
             file=audio,
             language=language
         )
@@ -51,7 +56,7 @@ async def check_read_aloud(
         logger.info(f"Word accuracy: {word_accuracy}%")
 
         # Step 3: Generate bilingual AI feedback (EN + VI)
-        feedback_en, feedback_vi, tricky_words = await openai_service.generate_bilingual_feedback(
+        feedback_en, feedback_vi, tricky_words = await ai_service.generate_bilingual_feedback(
             expected_text=expected_text,
             spoken_text=transcript,
             word_accuracy=word_accuracy,
@@ -62,9 +67,9 @@ async def check_read_aloud(
         # Step 4: Generate TTS for both feedbacks
         try:
             # English TTS
-            tts_en_path = await openai_service.generate_speech(
+            tts_en_path = await ai_service.generate_speech(
                 text=feedback_en,
-                voice="nova"  # English voice
+                voice="en-US-AvaNeural" if settings.ai_provider == "gemini" else "nova"
             )
             tts_en_url = f"/media/{Path(tts_en_path).name}"
             logger.info(f"EN TTS generated: {tts_en_url}")
@@ -73,10 +78,10 @@ async def check_read_aloud(
             tts_en_url = None
 
         try:
-            # Vietnamese TTS (OpenAI TTS supports Vietnamese with 'alloy' voice)
-            tts_vi_path = await openai_service.generate_speech(
+            # Vietnamese TTS
+            tts_vi_path = await ai_service.generate_speech(
                 text=feedback_vi,
-                voice="alloy"  # Works for Vietnamese
+                voice="vi-VN-NamMinhNeural" if settings.ai_provider == "gemini" else "alloy"
             )
             tts_vi_url = f"/media/{Path(tts_vi_path).name}"
             logger.info(f"VI TTS generated: {tts_vi_url}")
@@ -154,13 +159,13 @@ async def check_free_speaking(
     """
     try:
         # Step 1: Transcribe
-        transcript = await openai_service.transcribe_audio(
+        transcript = await ai_service.transcribe_audio(
             file=audio,
             language=language
         )
 
         # Step 2: Get conversational response from Coach Ivy
-        reply, emotion_tag = await openai_service.chat_with_coach(
+        reply, emotion_tag = await ai_service.chat_with_coach(
             message=transcript,
             mode="free_chat",
             context={"type": "speaking_practice", "context": context} if context else None

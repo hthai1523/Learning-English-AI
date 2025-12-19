@@ -10,7 +10,11 @@ from models.schemas import (
     LiveTalkMission,
     SessionSummary
 )
-from services import openai_service
+from config import settings
+if settings.ai_provider == "gemini":
+    from services import free_ai_service as ai_service
+else:
+    from services import openai_service as ai_service
 from pathlib import Path
 import logging
 import json
@@ -171,7 +175,7 @@ async def live_talk_turn(
         logger.info(f"Live Talk turn - user: {user_id}, coach: {coach_id}, topic: {topic}")
 
         # Step 1: Transcribe user audio using Whisper STT
-        user_text = await openai_service.transcribe_audio(
+        user_text = await ai_service.transcribe_audio(
             file=audio,
             language="en"
         )
@@ -200,25 +204,47 @@ async def live_talk_turn(
         if topic and topic in TOPIC_CONTEXTS:
             system_prompt += f"\n\n**Current topic context:** {TOPIC_CONTEXTS[topic]}"
 
-        # Build message array for ChatGPT
-        chat_messages = [{"role": "system", "content": system_prompt}]
-        chat_messages.extend(messages)
-        chat_messages.append({"role": "user", "content": user_text})
+        # Step 4: Call AI for coach response
+        # Note: free_ai_service.chat_with_coach handles context differently than direct OpenAI call
+        # We'll adapt based on provider
 
-        # Step 4: Call ChatGPT for coach response
-        response = client.chat.completions.create(
-            model="gpt-4",
-            messages=chat_messages,
-            max_tokens=150,  # Keep responses short
-            temperature=0.7  # Natural but not too random
-        )
+        if settings.ai_provider == "gemini":
+            # For Gemini, we pass history as context or append to prompt
+            # Simplified for now: just send last user message with system prompt
+            # In a real app, we'd reconstruct full chat history for Gemini
 
-        assistant_text = response.choices[0].message.content.strip()
+            assistant_text, _ = await ai_service.chat_with_coach(
+                message=user_text,
+                mode="free_chat",
+                context={"system_prompt": system_prompt, "history": messages}
+            )
+        else:
+            # OpenAI implementation (original)
+            chat_messages = [{"role": "system", "content": system_prompt}]
+            chat_messages.extend(messages)
+            chat_messages.append({"role": "user", "content": user_text})
+
+            response = client.chat.completions.create(
+                model="gpt-4",
+                messages=chat_messages,
+                max_tokens=150,
+                temperature=0.7
+            )
+            assistant_text = response.choices[0].message.content.strip()
+
         logger.info(f"Coach {coach_id} replied: '{assistant_text[:100]}...'")
 
         # Step 5: Generate TTS for coach's response
         tts_voice = coach["voice"]
-        tts_path = await openai_service.generate_speech(
+
+        # Map voices for Edge TTS if needed
+        if settings.ai_provider == "gemini":
+            if coach_id == "ivy":
+                tts_voice = "en-US-AvaNeural"
+            else:
+                tts_voice = "en-US-AndrewNeural"
+
+        tts_path = await ai_service.generate_speech(
             text=assistant_text,
             voice=tts_voice
         )
@@ -358,21 +384,43 @@ Please provide a supportive and encouraging analysis in JSON format:
 
 Be very encouraging and supportive. Focus on progress, not perfection."""
 
-        # Call GPT for analysis
-        response = client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=[
-                {
-                    "role": "system",
-                    "content": "You are a supportive English teacher analyzing student conversation practice."
-                },
-                {"role": "user", "content": analysis_prompt}
-            ],
-            response_format={"type": "json_object"},
-            temperature=0.3
-        )
+        # Call AI for analysis
+        if settings.ai_provider == "gemini":
+            # Gemini implementation
+            prompt = f"{analysis_prompt}\n\nOutput JSON only."
+            response_text, _ = await ai_service.chat_with_coach(
+                message=prompt,
+                mode="explain" # Use explain mode for structured output
+            )
 
-        summary_data = json.loads(response.choices[0].message.content)
+            # Clean up JSON
+            if "```json" in response_text:
+                response_text = response_text.split("```json")[1].split("```")[0].strip()
+            elif "```" in response_text:
+                response_text = response_text.split("```")[1].split("```")[0].strip()
+
+            try:
+                summary_data = json.loads(response_text)
+            except:
+                summary_data = {}
+
+        else:
+            # OpenAI implementation
+            response = client.chat.completions.create(
+                model="gpt-4o-mini",
+                messages=[
+                    {
+                        "role": "system",
+                        "content": "You are a supportive English teacher analyzing student conversation practice."
+                    },
+                    {"role": "user", "content": analysis_prompt}
+                ],
+                response_format={"type": "json_object"},
+                temperature=0.3
+            )
+            summary_data = json.loads(response.choices[0].message.content)
+
+
         logger.info(f"Summary generated: {summary_data}")
 
         # Calculate session stats
@@ -403,4 +451,7 @@ Be very encouraging and supportive. Focus on progress, not perfection."""
 from openai import OpenAI
 from config import settings
 
-client = OpenAI(api_key=settings.openai_api_key)
+# Only initialize OpenAI client if using OpenAI provider
+client = None
+if settings.ai_provider == "openai":
+    client = OpenAI(api_key=settings.openai_api_key)

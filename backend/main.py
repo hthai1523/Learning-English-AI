@@ -59,10 +59,17 @@ async def ping():
 @app.get("/health")
 async def health_check():
     """Detailed health check"""
+    ai_configured = False
+    if settings.ai_provider == "openai":
+        ai_configured = bool(settings.openai_api_key and settings.openai_api_key != "your_openai_api_key_here")
+    elif settings.ai_provider == "gemini":
+        ai_configured = bool(settings.gemini_api_key)
+
     return {
         "status": "healthy",
         "environment": settings.env,
-        "openai_configured": bool(settings.openai_api_key and settings.openai_api_key != "your_openai_api_key_here")
+        "ai_provider": settings.ai_provider,
+        "ai_configured": ai_configured
     }
 
 
@@ -83,7 +90,7 @@ async def startup_event():
     logger.info("🚀 English Studio API starting up...")
     logger.info(f"Environment: {settings.env}")
     logger.info(f"Frontend URL: {settings.frontend_url}")
-    logger.info(f"OpenAI configured: {bool(settings.openai_api_key and settings.openai_api_key != 'your_openai_api_key_here')}")
+    logger.info(f"AI Provider: {settings.ai_provider}")
 
 
 @app.on_event("shutdown")

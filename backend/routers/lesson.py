@@ -3,7 +3,11 @@ Lesson Router - Endpoints for lesson management and exercise checking
 """
 from fastapi import APIRouter, HTTPException
 from models.schemas import ExerciseCheckRequest, ExerciseCheckResponse
-from services import openai_service
+from config import settings
+if settings.ai_provider == "gemini":
+    from services import free_ai_service as ai_service
+else:
+    from services import openai_service as ai_service
 import logging
 
 logger = logging.getLogger(__name__)
@@ -26,7 +30,7 @@ async def check_exercise(request: ExerciseCheckRequest):
         logger.info(f"Exercise check - lesson: {request.lesson_id}, type: {request.exercise_type}")
 
         # Use AI to generate feedback
-        is_correct, score, feedback, emotion_tag = await openai_service.check_exercise_with_feedback(
+        is_correct, score, feedback, emotion_tag = await ai_service.check_exercise_with_feedback(
             question=request.question or "Exercise question",
             user_answers=request.user_answers,
             correct_answers=request.correct_answers,

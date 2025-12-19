@@ -3,7 +3,11 @@ Chat Router - Endpoints for chatting with Coach Ivy
 """
 from fastapi import APIRouter, HTTPException
 from models.schemas import ChatRequest, ChatResponse
-from services import openai_service
+from config import settings
+if settings.ai_provider == "gemini":
+    from services import free_ai_service as ai_service
+else:
+    from services import openai_service as ai_service
 import logging
 
 logger = logging.getLogger(__name__)
@@ -30,8 +34,8 @@ async def chat_with_teacher(request: ChatRequest):
     try:
         logger.info(f"Chat request - mode: {request.mode}, message: {request.message[:50]}...")
 
-        # Call OpenAI service
-        reply, emotion_tag = await openai_service.chat_with_coach(
+        # Call AI service
+        reply, emotion_tag = await ai_service.chat_with_coach(
             message=request.message,
             mode=request.mode,
             context=request.context
