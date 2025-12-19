@@ -4,6 +4,7 @@
  */
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+console.log('Current API_BASE_URL:', API_BASE_URL); // Debug log
 
 /**
  * Chat with Coach Ivy
