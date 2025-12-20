@@ -60,7 +60,7 @@ const MiniDrillModal = ({ word, onClose }) => {
       formData.append('user_id', profile?.user_id || 'user_001');
 
       const response = await fetch(
-        `${import.meta.env.VITE_API_BASE_URL}/api/speaking/practice`,
+        `${import.meta.env.VITE_API_URL || 'https://learning-english-ai.onrender.com'}/api/speaking/practice`,
         {
           method: 'POST',
           body: formData

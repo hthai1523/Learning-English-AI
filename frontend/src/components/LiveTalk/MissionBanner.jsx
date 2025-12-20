@@ -30,7 +30,7 @@ const MissionBanner = ({ topic, focusWord, onClearFocus }) => {
       try {
         setIsLoading(true);
         const response = await fetch(
-          `${import.meta.env.VITE_API_BASE_URL}/api/live-talk/mission?topic=${topic}`
+          `${import.meta.env.VITE_API_URL || 'https://learning-english-ai.onrender.com'}/api/live-talk/mission?topic=${topic}`
         );
 
         if (!response.ok) {
