@@ -3,9 +3,9 @@
  * Handles all communication with the backend API
  */
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://learning-english-ai.onrender.com';
 console.log('%c 🚀 API_BASE_URL:', 'background: #222; color: #bada55; font-size: 20px', API_BASE_URL);
-window.APP_VERSION = '1.0.1'; // To check in console
+window.APP_VERSION = '1.0.2'; // To check in console
 
 /**
  * Chat with Coach Ivy
