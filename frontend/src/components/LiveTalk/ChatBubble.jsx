@@ -12,7 +12,7 @@ const ChatBubble = ({ message }) => {
       setIsPlaying(true);
       const fullUrl = message.audio_url.startsWith('http')
         ? message.audio_url
-        : `${import.meta.env.VITE_API_BASE_URL}${message.audio_url}`;
+        : `${import.meta.env.VITE_API_URL || 'https://learning-english-ai.onrender.com'}${message.audio_url}`;
 
       const audio = new Audio(fullUrl);
       audio.onended = () => setIsPlaying(false);
