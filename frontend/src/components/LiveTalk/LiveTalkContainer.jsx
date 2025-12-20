@@ -86,7 +86,7 @@ const LiveTalkContainer = () => {
       formData.append('topic', selectedTopic);
       formData.append('history', JSON.stringify(messages));
 
-      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/live-talk/turn`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'https://learning-english-ai.onrender.com'}/api/live-talk/turn`, {
         method: 'POST',
         body: formData
       });
@@ -132,7 +132,7 @@ const LiveTalkContainer = () => {
       avatarControl.startSpeaking();
       const fullUrl = audioUrl.startsWith('http')
         ? audioUrl
-        : `${import.meta.env.VITE_API_BASE_URL}${audioUrl}`;
+        : `${import.meta.env.VITE_API_URL || 'https://learning-english-ai.onrender.com'}${audioUrl}`;
 
       const audio = new Audio(fullUrl);
       audio.onended = () => avatarControl.resetToIdle();
@@ -174,7 +174,7 @@ const LiveTalkContainer = () => {
       formData.append('user_id', profile?.user_id || 'user_001');
 
       const response = await fetch(
-        `${import.meta.env.VITE_API_BASE_URL}/api/live-talk/end-session`,
+        `${import.meta.env.VITE_API_URL || 'https://learning-english-ai.onrender.com'}/api/live-talk/end-session`,
         {
           method: 'POST',
           body: formData

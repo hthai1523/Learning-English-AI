@@ -3,7 +3,7 @@
  * Centralized Text-to-Speech functionality for the English Learning App
  */
 
-const TTS_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+const TTS_BASE_URL = import.meta.env.VITE_API_URL || 'https://learning-english-ai.onrender.com';
 
 /**
  * Voice mapping for coaches and languages
